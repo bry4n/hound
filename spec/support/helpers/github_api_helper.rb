@@ -222,27 +222,6 @@ module GithubApiHelper
     )
   end
 
-
-  def stub_contents_request_not_found(token, options = {})
-    file = options.fetch(:file, 'config/unicorn.rb')
-
-    stub_request(
-      :get,
-      "https://api.github.com/repos/#{options[:repo_name]}/contents/#{file}?ref=#{options[:sha]}"
-    ).with(
-      headers: {
-        'Authorization' => "token #{token}",
-        'Accept' => 'application/vnd.github.beta+json',
-        'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'User-Agent'=>'Octokit Ruby Gem 2.5.1'
-    }
-    ).to_return(
-      status: 404,
-      body: '{}',
-      headers: { 'Content-Type' => 'application/json; charset=utf-8' }
-    )
-  end
-
   private
 
   def stub_orgs_request(auth_token)
