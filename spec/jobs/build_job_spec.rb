@@ -27,23 +27,19 @@ describe BuildJob, '#error' do
     it 'sets failed_at to current time' do
       build_runner = double(:build_runner, run: true)
       build_job = BuildJob.new(build_runner)
-      job = double(update_attribute: true, id: 1)
-      now = Time.now.utc
-      Time.stub(:now).and_return(now)
+      job = double(fail!: true, id: 1)
 
       build_job.error(job, Octokit::NotFound.new)
 
-      expect(job).to have_received(:update_attribute).with(
-        failed_at: now
-      )
+      expect(job).to have_received(:fail!)
     end
   end
 
-  context 'with an other exception' do
+  context 'with another exception' do
     it 'does not update failed_at' do
       Raven.stub(:capture_exception)
       build_runner = double(:build_runner, run: true)
-      job = double(update_attribute: true, id: 1)
+      job = double(fail!: true, id: 1)
       exception = double(:exception)
       build_job = BuildJob.new(build_runner)
 
@@ -53,7 +49,7 @@ describe BuildJob, '#error' do
         exception,
         extra: { job_id: job.id }
       )
-      expect(job).not_to have_received(:update_attribute)
+      expect(job).not_to have_received(:fail!)
     end
   end
 end
