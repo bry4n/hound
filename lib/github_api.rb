@@ -102,8 +102,6 @@ class GithubApi
     end
 
     add_user_to_team(username, team.id)
-
-    team
   end
 
   def add_user_to_team(username, team_id)
