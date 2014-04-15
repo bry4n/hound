@@ -1,6 +1,7 @@
 require 'fast_spec_helper'
 require 'app/jobs/monitorable'
 require 'app/jobs/build_job'
+require 'octokit'
 
 describe BuildJob do
   it 'is monitored' do
@@ -18,5 +19,41 @@ describe BuildJob, '#perform' do
     build_job.perform
 
     expect(build_runner).to have_received(:run)
+  end
+end
+
+describe BuildJob, '#perform' do
+  context 'with Octokit::NotFound exception' do
+    it 'sets failed_at to current time' do
+      build_runner = double(:build_runner, run: true)
+      build_job = BuildJob.new(build_runner)
+      job = double(update_attribute: true, id: 1)
+      now = Time.now.utc
+      Time.stub(:now).and_return(now)
+
+      build_job.error(job, Octokit::NotFound.new)
+
+      expect(job).to have_received(:update_attribute).with(
+        failed_at: Time.now.utc
+      )
+    end
+  end
+
+  context 'with no NoMethodError' do
+    it 'does not update failed_at' do
+      Raven.stub(:capture_exception)
+      build_runner = double(:build_runner, run: true)
+      job = double(update_attribute: true, id: 1)
+      exception = double(:exception)
+      build_job = BuildJob.new(build_runner)
+
+      build_job.error(job, exception)
+
+      expect(Raven).to have_received(:capture_exception).with(
+        exception,
+        extra: { job_id: kind_of(Numeric) }
+      )
+      expect(job).not_to have_received(:update_attribute)
+    end
   end
 end
